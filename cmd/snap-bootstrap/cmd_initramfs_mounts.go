@@ -141,6 +141,8 @@ func generateInitramfsMounts() (err error) {
 		err = generateMountsModeInstall(mst)
 	case "run":
 		err = generateMountsModeRun(mst)
+	case "run-cloudimg-rootfs-draft-1":
+		err = generateMountsModeRunCloudimgRootfsDraft1(mst)
 	default:
 		// this should never be reached, ModeAndRecoverySystemFromKernelCommandLine
 		// will have returned a non-nill error above if there was another mode
@@ -1370,6 +1372,75 @@ func maybeMountSave(disk disks.Disk, rootdir string, encrypted bool, mountOpts *
 		return true, err
 	}
 	return true, nil
+}
+
+func generateMountsModeRunCloudimgRootfsDraft1(mst *initramfsMountsState) error {
+	// 1. mount ESP
+	// TODO cpc images should maybe set partlabel on the UEFI parition
+	if err := mountPartitionMatchingKernelDisk(boot.InitramfsUbuntuSeedDir, "UEFI"); err != nil {
+		return err
+	}
+
+	// get the disk that we mounted the ESP from as a reference
+	// point for future mounts
+	disk, err := disks.DiskFromMountPoint(boot.InitramfsUbuntuSeedDir, nil)
+	if err != nil {
+		return err
+	}
+
+	// 3.1. measure model
+	err = stampedAction("run-model-measured", func() error {
+		return secbootMeasureSnapModelWhenPossible(mst.UnverifiedBootModel)
+	})
+	if err != nil {
+		logger.Noticef("ignoring failure to measure model: %v", err)
+	}
+	// at this point on a system with TPM-based encryption
+	// data can be open only if the measured model matches the actual
+	// run model.
+	// TODO:UC20: on ARM systems and no TPM with encryption
+	// we need other ways to make sure that the disk is opened
+	// and we continue booting only for expected models
+
+	// 3.2. mount Data
+	// Changing to SeedEncryptionKeyDir
+	runModeKey := filepath.Join(boot.InitramfsSeedEncryptionKeyDir, "cloudimg-rootfs.sealed-key")
+	opts := &secboot.UnlockVolumeUsingSealedKeyOptions{
+		AllowRecoveryKey: true,
+	}
+	unlockRes, err := secbootUnlockVolumeUsingSealedKeyIfEncrypted(disk, "cloudimg-rootfs", runModeKey, opts)
+	if err != nil {
+		return err
+	}
+
+	// TODO: do we actually need fsck if we are mounting a mapper device?
+	// probably not?
+	fsckSystemdOpts := &systemdMountOptions{
+		NeedsFsck: true,
+	}
+	if err := doSystemdMount(unlockRes.FsDevice, boot.InitramfsDataDir, fsckSystemdOpts); err != nil {
+		return err
+	}
+
+	// 4.1 verify that ubuntu-data comes from where we expect it to
+	diskOpts := &disks.Options{}
+	if unlockRes.IsEncrypted {
+		// then we need to specify that the data mountpoint is expected to be a
+		// decrypted device, applies to both ubuntu-data and ubuntu-save
+		diskOpts.IsDecryptedDevice = true
+	}
+
+	matches, err := disk.MountPointIsFromDisk(boot.InitramfsDataDir, diskOpts)
+	if err != nil {
+		return err
+	}
+	if !matches {
+		// failed to verify that ubuntu-data mountpoint comes from the same disk
+		// as ubuntu-boot
+		return fmt.Errorf("cannot validate boot: cloudimg-rootfs mountpoint is expected to be from disk %s but is not", disk.Dev())
+	}
+
+	return nil
 }
 
 func generateMountsModeRun(mst *initramfsMountsState) error {
