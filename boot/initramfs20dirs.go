@@ -99,6 +99,7 @@ func setInitramfsDirVars(rootdir string) {
 	InitramfsWritableDir = filepath.Join(InitramfsDataDir, "system-data")
 	InitramfsSeedEncryptionKeyDir = filepath.Join(InitramfsUbuntuSeedDir, "device/fde")
 	InitramfsBootEncryptionKeyDir = filepath.Join(InitramfsUbuntuBootDir, "device/fde")
+	InitramfsSysrootDir = filepath.Join(rootdir, "sysroot")
 
 	snapBootFlagsFile = filepath.Join(dirs.SnapRunDir, "boot-flags")
 }

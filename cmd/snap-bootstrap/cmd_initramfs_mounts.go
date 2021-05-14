@@ -1418,7 +1418,7 @@ func generateMountsModeRunCloudimgRootfsDraft1(mst *initramfsMountsState) error 
 	fsckSystemdOpts := &systemdMountOptions{
 		NeedsFsck: true,
 	}
-	if err := doSystemdMount(unlockRes.FsDevice, boot.InitramfsDataDir, fsckSystemdOpts); err != nil {
+	if err := doSystemdMount(unlockRes.FsDevice, boot.InitramfsSysrootDir, fsckSystemdOpts); err != nil {
 		return err
 	}
 
@@ -1430,13 +1430,13 @@ func generateMountsModeRunCloudimgRootfsDraft1(mst *initramfsMountsState) error 
 		diskOpts.IsDecryptedDevice = true
 	}
 
-	matches, err := disk.MountPointIsFromDisk(boot.InitramfsDataDir, diskOpts)
+	matches, err := disk.MountPointIsFromDisk(boot.InitramfsSysrootDir, diskOpts)
 	if err != nil {
 		return err
 	}
 	if !matches {
-		// failed to verify that ubuntu-data mountpoint comes from the same disk
-		// as ubuntu-boot
+		// failed to verify that cloudimg-rootfs mountpoint
+		// comes from the same disk as ESP
 		return fmt.Errorf("cannot validate boot: cloudimg-rootfs mountpoint is expected to be from disk %s but is not", disk.Dev())
 	}
 
