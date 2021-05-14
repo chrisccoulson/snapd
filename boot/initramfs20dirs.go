@@ -80,6 +80,10 @@ var (
 	// keys during the initramfs on ubuntu-boot.
 	InitramfsBootEncryptionKeyDir string
 
+	// InitramfsSysrootDir is the location where to pivot-root
+	// will be performed, aka the host system being booted.
+	InitramfsSysrootDir string
+
 	// snapBootFlagsFile is the location of the file that is used
 	// internally for saving the current boot flags active for this boot.
 	snapBootFlagsFile string
