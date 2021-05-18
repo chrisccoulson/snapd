@@ -41,10 +41,13 @@ const (
 	// ModeRecover is a mode in which the device boots into the recovery
 	// system.
 	ModeRecover = "recover"
+	// ModeCloudImg is a mode in which classic cloud image is
+	// booted.
+	ModeCloudImg = "run-cloudimg-rootfs-draft-1"
 )
 
 var (
-	validModes = []string{ModeInstall, ModeRecover, ModeRun}
+	validModes = []string{ModeInstall, ModeRecover, ModeRun, ModeCloudImg}
 )
 
 // ModeAndRecoverySystemFromKernelCommandLine returns the current system mode
@@ -58,10 +61,10 @@ func ModeAndRecoverySystemFromKernelCommandLine() (mode, sysLabel string, err er
 	var modeOk bool
 	mode, modeOk = m["snapd_recovery_mode"]
 
-	// no mode specified gets interpreted as install
+	// no mode specified gets interpreted as ModeCloudImg
 	if modeOk {
 		if mode == "" {
-			mode = ModeInstall
+			mode = ModeCloudImg
 		} else if !strutil.ListContains(validModes, mode) {
 			return "", "", fmt.Errorf("cannot use unknown mode %q", mode)
 		}
