@@ -33,6 +33,9 @@ var (
 )
 
 func init() {
+	secbootCloudPrepare = func(_ string) error {
+		return errNotImplemented
+	}
 	secbootMeasureSnapSystemEpochWhenPossible = func() error {
 		return errNotImplemented
 	}

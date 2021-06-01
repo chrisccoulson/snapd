@@ -25,6 +25,7 @@ import (
 )
 
 func init() {
+	secbootCloudPrepare = secboot.CloudPrepare
 	secbootMeasureSnapSystemEpochWhenPossible = secboot.MeasureSnapSystemEpochWhenPossible
 	secbootMeasureSnapModelWhenPossible = secboot.MeasureSnapModelWhenPossible
 	secbootUnlockVolumeUsingSealedKeyIfEncrypted = secboot.UnlockVolumeUsingSealedKeyIfEncrypted

@@ -77,6 +77,7 @@ var (
 		snap.TypeSnapd:  "snapd",
 	}
 
+	secbootCloudPrepare                          func(dir string) error
 	secbootMeasureSnapSystemEpochWhenPossible    func() error
 	secbootMeasureSnapModelWhenPossible          func(findModel func() (*asserts.Model, error)) error
 	secbootUnlockVolumeUsingSealedKeyIfEncrypted func(disk disks.Disk, name string, encryptionKeyFile string, opts *secboot.UnlockVolumeUsingSealedKeyOptions) (secboot.UnlockResult, error)
@@ -1401,6 +1402,10 @@ func generateMountsModeRunCloudimgRootfsDraft1(mst *initramfsMountsState) error 
 	// TODO:UC20: on ARM systems and no TPM with encryption
 	// we need other ways to make sure that the disk is opened
 	// and we continue booting only for expected models
+
+	if err := secbootCloudPrepare(boot.InitramfsUbuntuSeedDir); err != nil {
+		return err
+	}
 
 	// 3.2. mount Data
 	// Changing to SeedEncryptionKeyDir
